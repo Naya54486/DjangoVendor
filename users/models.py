@@ -6,6 +6,7 @@ from django.contrib.auth.models import (
 )
 from django.db import transaction
 from rest_framework.authtoken.models import Token
+import datetime
 from django.utils import timezone
 
 def expiry_time():
@@ -13,16 +14,20 @@ def expiry_time():
 
 
 class UserManager(BaseUserManager):
-    def create_user(self, email, name, phone_number, password=None):
+    def create_user(self, email, password, **other_fields):
         email = self.normalize_email(email)
-        user = self.model(email=email, name=name, phone_number=phone_number)
+        user = self.model(email=email)
         user.set_password(password)
         user.save(using=self._db)
 
         return user
 
-    def create_superuser(self, email, name, phone_number, password):
-        user = self.create_user(email, name, phone_number, password)
+    def create_superuser(self, email, password, **other_fields):
+        
+        other_fields.setdefault('is_staff', True)
+        other_fields.setdefault('is_active', True)
+
+        user = self.create_user(email, password)
         user.is_superuser = True
         user.is_staff = True
         user.save(using=self._db)
