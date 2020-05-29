@@ -5,7 +5,6 @@ from django.contrib.auth.models import (
     BaseUserManager
 )
 from django.db import transaction
-from rest_framework.authtoken.models import Token
 import datetime
 from django.utils import timezone
 
@@ -13,7 +12,7 @@ def expiry_time():
        return timezone.now() + timezone.timedelta(minutes=10)
 
 
-class UserManager(BaseUserManager):
+class UserManager(BaseUserManager, PermissionsMixin):
     def create_user(self, email, password, **other_fields):
         email = self.normalize_email(email)
         user = self.model(email=email)
@@ -35,7 +34,7 @@ class UserManager(BaseUserManager):
         return user
 
 
-class User(AbstractBaseUser, PermissionsMixin):
+class User(AbstractBaseUser):
     email = models.EmailField(max_length = 100, unique=True, verbose_name='E-mail')
     password = models.CharField(max_length=200)
     is_active = models.BooleanField(default=True)
@@ -48,11 +47,6 @@ class User(AbstractBaseUser, PermissionsMixin):
     USERNAME_FIELD = 'email'
 
     objects = UserManager()
-
-    def save(self, *args, **kwargs):
-        with transaction.atomic():
-            super().save(*args, **kwargs)
-            Token.objects.get_or_create(user=self)
 
     def __str__(self):
         return self.email
